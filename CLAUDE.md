@@ -59,6 +59,7 @@
 - `/docs/HUMAN.md` is the one exception: written for the user as the human orchestrator. It's an incremental, high-level report of the entire application — what it does, how it works, architecture, major concepts, important flows, and significant technical decisions. It must always describe the _current_ state: update or remove outdated information rather than letting it accumulate historical detail.
 - Before implementing a feature or making a significant change, check the relevant parts of `/docs` to understand existing architecture and conventions.
 - Only non-obvious changes need a `/docs` entry or update (including `/docs/HUMAN.md` when relevant) — skip it for changes that are self-evident from the code.
+- Keep the root `README.md` up to date whenever a change affects what it covers (features, requirements, installation/build steps, usage, project layout). It's written in English for humans and must include installation instructions. Update it in the same commit as the change.
 - KDoc functions when there's non-obvious logic, a public/reusable API, important assumptions, side effects, or non-obvious params/return values. Don't add KDoc that just restates the code.
 - Use inline comments where they'll meaningfully help review — not everywhere.
 
