@@ -2,11 +2,12 @@
 
 ## What it does
 Android TV app that plays web live streams as if they were native TV channels. Current state (MVP):
-opening the app goes straight into full-screen playback of one hardcoded channel (DSports from tvf90),
-autoplaying. There is no channel selection yet.
+opening the app goes straight into full-screen playback of the first channel of a fixed lineup of six
+sports channels from tvf90 (`ChannelLineup`), autoplaying.
 
 ## How it works
-1. `MainActivity` builds a `PlayerViewModel` with the tvf90 adapter and the hardcoded `DefaultChannel`.
+1. `MainActivity` builds a `PlayerViewModel` with the tvf90 adapter and the channel lineup; it starts on the
+   first channel.
 2. The ViewModel asks the adapter to **resolve** the channel into a playable stream URL. This happens on
    every launch because the site hands out signed URLs that expire after ~5 hours.
 3. The tvf90 adapter downloads the site's internal player page (pretending to be the site's own

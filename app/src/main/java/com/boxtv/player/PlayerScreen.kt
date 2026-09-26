@@ -24,8 +24,8 @@ import com.boxtv.R
 fun PlayerRoute(viewModel: PlayerViewModel) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
     PlayerScreen(
-        state = state,
-        channelTitle = viewModel.channel.title,
+        state = state.playback,
+        channelTitle = state.currentChannel.title,
         onRetry = viewModel::retry,
         onPlaybackStarted = viewModel::onPlaybackStarted,
         onPlaybackError = viewModel::onPlaybackError
@@ -34,7 +34,7 @@ fun PlayerRoute(viewModel: PlayerViewModel) {
 
 @Composable
 fun PlayerScreen(
-    state: PlayerUiState,
+    state: PlaybackState,
     channelTitle: String,
     onRetry: () -> Unit,
     onPlaybackStarted: () -> Unit,
@@ -42,19 +42,19 @@ fun PlayerScreen(
 ) {
     Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
         when (state) {
-            PlayerUiState.Loading -> Text(
+            PlaybackState.Loading -> Text(
                 text = stringResource(R.string.player_loading, channelTitle),
                 style = MaterialTheme.typography.titleLarge
             )
 
-            is PlayerUiState.Ready -> VideoPlayer(
+            is PlaybackState.Ready -> VideoPlayer(
                 stream = state.stream,
                 onPlaybackStarted = onPlaybackStarted,
                 onPlaybackError = onPlaybackError,
                 modifier = Modifier.fillMaxSize()
             )
 
-            is PlayerUiState.Error -> PlaybackError(
+            is PlaybackState.Error -> PlaybackError(
                 channelTitle = channelTitle,
                 message = state.message,
                 onRetry = onRetry

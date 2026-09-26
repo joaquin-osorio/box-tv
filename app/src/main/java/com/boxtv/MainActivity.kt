@@ -18,7 +18,7 @@ import com.boxtv.source.tvf90.Tvf90Source
 class MainActivity : ComponentActivity() {
 
     private val playerViewModel: PlayerViewModel by viewModels {
-        viewModelFactory { initializer { PlayerViewModel(Tvf90Source(), DefaultChannel) } }
+        viewModelFactory { initializer { PlayerViewModel(Tvf90Source(), ChannelLineup) } }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

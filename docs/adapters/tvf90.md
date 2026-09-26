@@ -9,6 +9,8 @@ Investigated 2026-09-25. No JSON API; resolution is a single HTML fetch + regex.
    ```js
    var playbackURL = "https://4.ftlly.com:443/<id>/mono.m3u8?token=<sig>-<xx>-<exp>-<start>";
    ```
+   - The string literal may sit on the next line (`playbackURL =\n    "..."`); the regex's `\s*` covers it.
+   - The CDN host (`<n>.ftlly.com`) varies per request/channel.
    - **Requires `Referer: https://tvf90.com/online.php?stream=<id>`.** Without it the page is served
      without `playbackURL` (anti-hotlink). The page also has JS iframe/sandbox checks, irrelevant because
      we never execute its JS.
@@ -18,7 +20,8 @@ Investigated 2026-09-25. No JSON API; resolution is a single HTML fetch + regex.
    still sends a browser User-Agent.
 
 ## Known channel ids
-- `dsports`
+All verified to return a `playbackURL` on 2026-09-25. The app's lineup is `com.boxtv.ChannelLineup`.
+- `espn`, `dsports`, `foxsports`, `tntsports`, `espnpremium`, `tycsports`
 
 ## Breakage checklist
 - Iframe path changed (`5.php` → something else): check `online.php` source.
