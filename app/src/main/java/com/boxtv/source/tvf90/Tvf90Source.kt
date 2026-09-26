@@ -52,8 +52,10 @@ class Tvf90Source(
 
     private companion object {
         val PLAYBACK_URL_REGEX = Regex("""playbackURL\s*=\s*"([^"]+)"""")
-        const val USER_AGENT =
-            "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-                "Chrome/128.0.0.0 Safari/537.36"
     }
 }
+
+/** Browser User-Agent sent to every tvf90 host, so requests look like the site's own pages. */
+internal const val USER_AGENT =
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
+        "Chrome/128.0.0.0 Safari/537.36"
