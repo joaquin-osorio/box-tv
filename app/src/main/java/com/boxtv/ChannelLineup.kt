@@ -2,7 +2,7 @@ package com.boxtv
 
 import com.boxtv.source.Channel
 
-/** The channels offered in the menu, in display order. The first one plays on launch. All are tvf90 ids. */
+/** The fixed channels of the menu's Channels tab, in display order. All are tvf90 ids. */
 val ChannelLineup = listOf(
     Channel(id = "espn", title = "ESPN"),
     Channel(id = "dsports", title = "DSports"),

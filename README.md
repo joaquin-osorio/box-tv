@@ -3,15 +3,14 @@
 An Android TV app that plays web live streams as if they were native TV channels, navigable entirely
 with a remote (D-pad).
 
-> **Status: early MVP.** A fixed lineup of six live sports channels (ESPN, DSports, Fox Sports,
-> TNT Sports, ESPN Premium, TyC Sports), switchable from a floating channel menu.
+> **Status: early MVP.** A home menu with a fixed lineup of six live sports channels (ESPN, DSports,
+> Fox Sports, TNT Sports, ESPN Premium, TyC Sports).
 
 ## Features
 
-- Full-screen live playback with Media3 (ExoPlayer), starting immediately on launch with the first
-  channel.
-- Floating channel menu opened with the remote's **Left** button; it closes itself after 10 seconds of
-  inactivity.
+- Home menu with tabs, built for the remote: pick a channel and it plays; **Back** returns to the menu
+  right where you left it.
+- Full-screen live playback with Media3 (ExoPlayer), starting as soon as a channel is picked.
 - Stream URLs are resolved at runtime on the device (the sites hand out short-lived signed URLs), so
   nothing expires inside the APK.
 - Clear error screen with a focused **Retry** button when a stream can't be obtained; automatic
@@ -81,11 +80,12 @@ and run `./gradlew installDebug` — or just press **Run** in Android Studio.
 
 ## Usage
 
-- Launching the app starts playing the first channel (ESPN) right away.
-- Press **Left** to open the channel list. Move with **Up/Down** and press **OK** to switch channel.
-  **Back** or **Right** closes the list; it also closes on its own after 10 seconds without a button
-  press.
-- If the stream fails, press OK on **Retry**, or press **Left** to pick another channel.
+- Launching the app opens the home menu on the **Channels** tab. Move with **Up/Down** and press **OK**
+  to play a channel.
+- Press **Up** from the top of a list (or **Back**) to reach the tabs; **Left/Right** switches tab and
+  **Down** goes back into the list. **Back** on the tabs exits the app.
+- While playing, **Back** returns to the menu.
+- If the stream fails, press OK on **Retry**, or **Back** to pick something else.
 - There are no playback controls (pause/seek): channels behave like live TV.
 
 ## Development
@@ -101,7 +101,8 @@ Project layout:
 
 - `app/src/main/java/com/boxtv/source/` — `StreamSource` interface and one adapter per site.
 - `app/src/main/java/com/boxtv/ChannelLineup.kt` — the channel list shown in the menu.
-- `app/src/main/java/com/boxtv/player/` — player ViewModel, screen, channel menu and ExoPlayer wrapper.
+- `app/src/main/java/com/boxtv/menu/` — home menu screen and its tabs.
+- `app/src/main/java/com/boxtv/player/` — player ViewModel, screen and ExoPlayer wrapper.
 - `docs/` — technical notes (`docs/HUMAN.md` has a high-level overview of the app).
 
 ## Disclaimer

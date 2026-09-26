@@ -4,18 +4,14 @@ import com.boxtv.source.Channel
 import com.boxtv.source.ResolvedStream
 import com.boxtv.source.StreamResolutionException
 import com.boxtv.source.StreamSource
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
-import kotlinx.coroutines.test.advanceTimeBy
 import kotlinx.coroutines.test.resetMain
-import kotlinx.coroutines.test.runCurrent
-import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertFalse
-import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 
@@ -24,7 +20,6 @@ class PlayerViewModelTest {
 
     private val espn = Channel(id = "espn", title = "ESPN")
     private val dsports = Channel(id = "dsports", title = "DSports")
-    private val channels = listOf(espn, dsports)
 
     /** Answers each resolve with the next queued result; each success yields a distinct URL. */
     private class FakeSource(vararg results: Boolean) : StreamSource {
@@ -37,6 +32,20 @@ class PlayerViewModelTest {
             if (!queue.removeFirst()) throw StreamResolutionException("boom")
             return ResolvedStream("https://example.com/$calls.m3u8")
         }
+    }
+
+    /** Never answers until [release] is called, to observe in-flight loads. */
+    private class SuspendingSource : StreamSource {
+        private val gate = CompletableDeferred<Unit>()
+        val resolvedIds = mutableListOf<String>()
+
+        override suspend fun resolve(channel: Channel): ResolvedStream {
+            resolvedIds += channel.id
+            gate.await()
+            return ResolvedStream("https://example.com/${channel.id}.m3u8")
+        }
+
+        fun release() = gate.complete(Unit)
     }
 
     private fun ready(n: Int) = PlaybackState.Ready(ResolvedStream("https://example.com/$n.m3u8"))
@@ -52,18 +61,56 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `resolves the first channel on start`() {
-        val source = FakeSource(true)
-        val viewModel = PlayerViewModel(source, channels)
+    fun `starts idle without resolving anything`() {
+        val source = FakeSource()
+        val viewModel = PlayerViewModel(source)
 
-        assertEquals(espn, viewModel.uiState.value.currentChannel)
-        assertEquals(ready(1), viewModel.uiState.value.playback)
+        assertEquals(PlayerUiState(), viewModel.uiState.value)
+        assertEquals(0, source.calls)
+    }
+
+    @Test
+    fun `play resolves the channel`() {
+        val source = FakeSource(true)
+        val viewModel = PlayerViewModel(source)
+
+        viewModel.play(espn)
+
+        assertEquals(PlayerUiState(espn, ready(1)), viewModel.uiState.value)
         assertEquals(listOf("espn"), source.resolvedIds)
     }
 
     @Test
+    fun `stop cancels an in-flight load and goes idle`() {
+        val source = SuspendingSource()
+        val viewModel = PlayerViewModel(source)
+        viewModel.play(espn)
+        assertEquals(PlaybackState.Loading, viewModel.uiState.value.playback)
+
+        viewModel.stop()
+        source.release()
+
+        assertEquals(PlayerUiState(), viewModel.uiState.value)
+    }
+
+    @Test
+    fun `playing another channel during a load replaces it`() {
+        val source = SuspendingSource()
+        val viewModel = PlayerViewModel(source)
+
+        viewModel.play(espn)
+        viewModel.play(dsports)
+        source.release()
+
+        val state = viewModel.uiState.value
+        assertEquals(dsports, state.currentChannel)
+        assertEquals(PlaybackState.Ready(ResolvedStream("https://example.com/dsports.m3u8")), state.playback)
+    }
+
+    @Test
     fun `shows error when resolution fails and recovers on retry`() {
-        val viewModel = PlayerViewModel(FakeSource(false, true), channels)
+        val viewModel = PlayerViewModel(FakeSource(false, true))
+        viewModel.play(espn)
         assertEquals(PlaybackState.Error("boom"), viewModel.uiState.value.playback)
 
         viewModel.retry()
@@ -74,7 +121,8 @@ class PlayerViewModelTest {
     @Test
     fun `first playback error re-resolves silently, second one surfaces`() {
         val source = FakeSource(true, true)
-        val viewModel = PlayerViewModel(source, channels)
+        val viewModel = PlayerViewModel(source)
+        viewModel.play(espn)
 
         viewModel.onPlaybackError("ERROR_CODE_IO_BAD_HTTP_STATUS")
         assertEquals(ready(2), viewModel.uiState.value.playback)
@@ -87,7 +135,8 @@ class PlayerViewModelTest {
     @Test
     fun `successful playback re-arms silent recovery`() {
         val source = FakeSource(true, true, true)
-        val viewModel = PlayerViewModel(source, channels)
+        val viewModel = PlayerViewModel(source)
+        viewModel.play(espn)
 
         viewModel.onPlaybackError("expired")
         viewModel.onPlaybackStarted()
@@ -97,82 +146,15 @@ class PlayerViewModelTest {
     }
 
     @Test
-    fun `selecting another channel resolves it and closes the menu`() {
-        val source = FakeSource(true, true)
-        val viewModel = PlayerViewModel(source, channels)
-        viewModel.openMenu()
-
-        viewModel.selectChannel(dsports)
-
-        val state = viewModel.uiState.value
-        assertEquals(dsports, state.currentChannel)
-        assertEquals(ready(2), state.playback)
-        assertFalse(state.isMenuOpen)
-        assertEquals(listOf("espn", "dsports"), source.resolvedIds)
-    }
-
-    @Test
-    fun `selecting the current channel only reloads it when it failed`() {
-        val source = FakeSource(true, false, true)
-        val viewModel = PlayerViewModel(source, channels)
-
-        viewModel.selectChannel(espn)
-        assertEquals(1, source.calls)
-
-        viewModel.onPlaybackError("silent")
-        viewModel.onPlaybackError("surfaced")
-        viewModel.selectChannel(espn)
-
-        assertEquals(ready(3), viewModel.uiState.value.playback)
-    }
-
-    @Test
-    fun `switching channel re-arms silent recovery`() {
+    fun `playing a new channel re-arms silent recovery`() {
         val source = FakeSource(true, true, true, true)
-        val viewModel = PlayerViewModel(source, channels)
+        val viewModel = PlayerViewModel(source)
+        viewModel.play(espn)
         viewModel.onPlaybackError("expired")
 
-        viewModel.selectChannel(dsports)
+        viewModel.play(dsports)
         viewModel.onPlaybackError("expired")
 
         assertEquals(ready(4), viewModel.uiState.value.playback)
-    }
-
-    @Test
-    fun `menu closes itself after the inactivity timeout`() = runTest {
-        val viewModel = PlayerViewModel(FakeSource(true), channels)
-
-        viewModel.openMenu()
-        advanceTimeBy(PlayerViewModel.MENU_TIMEOUT.inWholeMilliseconds - 1)
-        assertTrue(viewModel.uiState.value.isMenuOpen)
-
-        advanceTimeBy(1)
-        runCurrent()
-        assertFalse(viewModel.uiState.value.isMenuOpen)
-    }
-
-    @Test
-    fun `interaction postpones the menu timeout`() = runTest {
-        val viewModel = PlayerViewModel(FakeSource(true), channels)
-        val timeout = PlayerViewModel.MENU_TIMEOUT.inWholeMilliseconds
-
-        viewModel.openMenu()
-        advanceTimeBy(timeout - 1_000)
-        viewModel.onMenuInteraction()
-        advanceTimeBy(timeout - 1)
-        assertTrue(viewModel.uiState.value.isMenuOpen)
-
-        advanceTimeBy(1)
-        runCurrent()
-        assertFalse(viewModel.uiState.value.isMenuOpen)
-    }
-
-    @Test
-    fun `interaction does not reopen a closed menu`() = runTest {
-        val viewModel = PlayerViewModel(FakeSource(true), channels)
-
-        viewModel.onMenuInteraction()
-
-        assertFalse(viewModel.uiState.value.isMenuOpen)
     }
 }
