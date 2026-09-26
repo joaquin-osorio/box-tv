@@ -39,7 +39,7 @@ class Tvf90ScheduleTest {
     fun `returns events sorted by start time`() = runTest {
         val events = loadFixture()
 
-        assertEquals(listOf(40033L, 40038L, 40049L, 40037L, 40025L), events.map { it.id })
+        assertEquals(listOf(40033, 40038, 40049, 40037, 40025).map { "tvf90:$it" }, events.map { it.id })
     }
 
     @Test
@@ -147,7 +147,7 @@ class Tvf90ScheduleTest {
         return schedule.events()
     }
 
-    private fun List<ScheduledEvent>.byId(id: Long) = single { it.id == id }
+    private fun List<ScheduledEvent>.byId(id: Long) = single { it.id == "tvf90:$id" }
 
     private fun tvf90(id: String, title: String) = Channel(Tvf90Source.ID, id, title)
 

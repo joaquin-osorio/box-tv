@@ -32,7 +32,7 @@ sealed interface ScheduleState {
 }
 
 /** [expandedEventId] is the event whose signals are listed (at most one at a time). */
-data class MenuUiState(val schedule: ScheduleState = ScheduleState.Loading, val expandedEventId: Long? = null)
+data class MenuUiState(val schedule: ScheduleState = ScheduleState.Loading, val expandedEventId: String? = null)
 
 /**
  * Holds today's events for the menu's Events tab. The agenda is fetched by [keepFresh], which the UI
@@ -62,7 +62,7 @@ class MenuViewModel(private val schedule: EventSchedule, private val clock: () -
     }
 
     /** Expands [eventId]'s signals, collapsing any other event; collapses it if it was already expanded. */
-    fun toggleEvent(eventId: Long) {
+    fun toggleEvent(eventId: String) {
         _uiState.update { it.copy(expandedEventId = if (it.expandedEventId == eventId) null else eventId) }
     }
 

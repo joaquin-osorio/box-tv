@@ -3,12 +3,13 @@ package com.boxtv.source
 import java.time.Instant
 
 /**
- * A scheduled live event (typically a match). [competition] is null when the site doesn't name one.
+ * A scheduled live event (typically a match). [id] is unique across sites (prefixed with the site's
+ * key) and stable across refreshes, so the UI can keep an event expanded or focused. [competition] is null when the site doesn't name one.
  * [channels] are the signals broadcasting it, playable through the matching [StreamSource]; empty
  * when the site hasn't published a signal yet.
  */
 data class ScheduledEvent(
-    val id: Long,
+    val id: String,
     val competition: String?,
     val title: String,
     val startsAt: Instant,

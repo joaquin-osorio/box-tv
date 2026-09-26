@@ -26,8 +26,8 @@ class MenuViewModelTest {
 
     private val start = Instant.parse("2026-09-25T20:00:00Z")
 
-    private fun event(id: Long, startsAt: Instant) = ScheduledEvent(
-        id = id,
+    private fun event(id: Int, startsAt: Instant) = ScheduledEvent(
+        id = "test:$id",
         competition = "Liga MX",
         title = "Match $id",
         startsAt = startsAt,
@@ -146,16 +146,16 @@ class MenuViewModelTest {
     fun `expands one event at a time`() {
         val viewModel = MenuViewModel(FakeSchedule())
 
-        viewModel.toggleEvent(1)
-        assertEquals(1L, viewModel.uiState.value.expandedEventId)
+        viewModel.toggleEvent("1")
+        assertEquals("1", viewModel.uiState.value.expandedEventId)
 
-        viewModel.toggleEvent(2)
-        assertEquals(2L, viewModel.uiState.value.expandedEventId)
+        viewModel.toggleEvent("2")
+        assertEquals("2", viewModel.uiState.value.expandedEventId)
 
-        viewModel.toggleEvent(2)
+        viewModel.toggleEvent("2")
         assertNull(viewModel.uiState.value.expandedEventId)
 
-        viewModel.toggleEvent(3)
+        viewModel.toggleEvent("3")
         viewModel.collapse()
         assertNull(viewModel.uiState.value.expandedEventId)
     }

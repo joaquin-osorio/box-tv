@@ -82,7 +82,7 @@ fun MenuRoute(viewModel: MenuViewModel, channels: List<Channel>, onPlay: (Channe
 fun MenuScreen(
     channels: List<Channel>,
     state: MenuUiState,
-    onToggleEvent: (Long) -> Unit,
+    onToggleEvent: (String) -> Unit,
     onCollapseEvent: () -> Unit,
     onRetrySchedule: () -> Unit,
     onPlay: (Channel) -> Unit

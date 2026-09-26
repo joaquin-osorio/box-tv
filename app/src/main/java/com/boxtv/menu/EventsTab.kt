@@ -42,10 +42,10 @@ import com.boxtv.source.Channel
 @Composable
 fun EventsTab(
     state: ScheduleState,
-    expandedEventId: Long?,
+    expandedEventId: String?,
     entryKey: String?,
     entryFocus: FocusRequester,
-    onToggleEvent: (Long) -> Unit,
+    onToggleEvent: (String) -> Unit,
     onCollapse: () -> Unit,
     onPlay: (key: String, channel: Channel) -> Unit,
     onRetry: () -> Unit,
@@ -100,10 +100,10 @@ fun EventsTab(
 @Composable
 private fun EventList(
     items: List<EventItem>,
-    expandedEventId: Long?,
+    expandedEventId: String?,
     entryKey: String?,
     entryFocus: FocusRequester,
-    onToggleEvent: (Long) -> Unit,
+    onToggleEvent: (String) -> Unit,
     onCollapse: () -> Unit,
     onPlay: (key: String, channel: Channel) -> Unit,
     modifier: Modifier
@@ -220,13 +220,13 @@ private sealed interface ListRow {
         override val key = "event:${item.event.id}"
     }
 
-    data class Signal(val eventId: Long, val channel: Channel, val isFirst: Boolean) : ListRow {
+    data class Signal(val eventId: String, val channel: Channel, val isFirst: Boolean) : ListRow {
         override val key = "signal:$eventId:${channel.id}"
     }
 }
 
 /** Items come sorted by start time, so statuses (and thus sections) are already contiguous. */
-private fun buildRows(items: List<EventItem>, expandedEventId: Long?): List<ListRow> = buildList {
+private fun buildRows(items: List<EventItem>, expandedEventId: String?): List<ListRow> = buildList {
     var section: Section? = null
     for (item in items) {
         if (item.status.section != section) {

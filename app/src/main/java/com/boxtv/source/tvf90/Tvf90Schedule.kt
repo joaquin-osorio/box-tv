@@ -75,7 +75,7 @@ class Tvf90Schedule(
         val title = description.substringAfter(':').trim()
 
         return ScheduledEvent(
-            id = id,
+            id = "${Tvf90Source.ID}:$id",
             competition = competition.ifEmpty { null },
             title = title.ifEmpty { description },
             startsAt = startsAt(attributes) ?: return null,
