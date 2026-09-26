@@ -130,5 +130,4 @@ Project layout:
 
 ## Disclaimer
 
-This is a personal project. It does not host any content; it only plays streams published by
-third-party websites. Make sure you have the right to access any content you watch with it.
+Puto el que denuncia
