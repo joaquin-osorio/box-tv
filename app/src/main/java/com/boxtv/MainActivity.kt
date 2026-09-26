@@ -19,8 +19,10 @@ import com.boxtv.menu.MenuRoute
 import com.boxtv.menu.MenuViewModel
 import com.boxtv.player.PlayerScreen
 import com.boxtv.player.PlayerViewModel
+import com.boxtv.source.MergedSchedule
 import com.boxtv.source.RoutingStreamSource
 import com.boxtv.source.dnsWithDohFallback
+import com.boxtv.source.streamtp.StreamtpSchedule
 import com.boxtv.source.streamtp.StreamtpSource
 import com.boxtv.source.tvf90.Tvf90Schedule
 import com.boxtv.source.tvf90.Tvf90Source
@@ -43,7 +45,11 @@ class MainActivity : ComponentActivity() {
         }
     }
     private val menuViewModel: MenuViewModel by viewModels {
-        viewModelFactory { initializer { MenuViewModel(Tvf90Schedule()) } }
+        viewModelFactory {
+            initializer {
+                MenuViewModel(MergedSchedule(listOf(Tvf90Schedule(), StreamtpSchedule(streamtpClient))))
+            }
+        }
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {

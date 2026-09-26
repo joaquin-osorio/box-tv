@@ -3,19 +3,20 @@
 ## What it does
 Android TV app that plays web live streams as if they were native TV channels. Current state (MVP):
 opening the app shows a home menu with two tabs: **Channels** (a fixed lineup of six sports channels
-from tvf90, `ChannelLineup`) and **Events** (today's sports agenda from tvf90, each event linked to the
-channels broadcasting it). Picking a channel or an event's signal plays it full screen, and Back
+from tvf90, `ChannelLineup`) and **Events** (today's sports agenda from two sites, tvf90 and streamtp,
+merged into one list, each event linked to the channels broadcasting it). Picking a channel or an event's signal plays it full screen, and Back
 returns to the menu.
 
 ## How it works
 1. `MainActivity` shows the home menu (`MenuScreen`) while nothing is playing, and the player once a
    channel is picked. "What is playing" lives in `PlayerViewModel` (`currentChannel`, null = menu), so
    that single value is the whole navigation.
-2. Picking a channel asks the tvf90 adapter to **resolve** it into a playable stream URL. This happens on
-   every play because the site hands out signed URLs that expire after ~5 hours.
-3. The tvf90 adapter downloads the site's internal player page (pretending to be the site's own
-   embedding page via the `Referer` header, which the site requires) and pulls the HLS (`.m3u8`) URL out
-   of it. None of the site's JavaScript — ads, popups, geo checks — is ever executed.
+2. Picking a channel asks the adapter of the channel's site (tvf90 or streamtp) to **resolve** it into a
+   playable stream URL. This happens on every play because the sites hand out signed URLs that expire
+   (tvf90 after ~5 hours; streamtp's are also tied to the device's public IP).
+3. The adapter downloads the site's internal player page and pulls the HLS (`.m3u8`) URL out of an inline
+   script (tvf90 additionally requires pretending to be its own embedding page via the `Referer` header).
+   None of the sites' JavaScript — ads, popups, geo checks — is ever executed.
 4. The player screen plays that URL with Media3/ExoPlayer, full screen, starting immediately. There are
    no playback controls: channels behave like live TV. **Back** stops playback and returns to the menu.
 
@@ -31,11 +32,21 @@ returns to the menu.
   while the player is showing).
 
 ## Events tab (today's agenda)
-- Source: tvf90's agenda JSON API, behind the `EventSchedule` interface (separate from `StreamSource`,
-  since an agenda and the streams could come from different sites). Details in `docs/adapters/tvf90.md`.
-- Each event's signals are tvf90 channel ids, so they play through the same `Tvf90Source` as the fixed
-  lineup. The site lists several mirrors per signal ("OP2", "OP3", "HD"); they all share one stream id,
-  so the app shows them as a single signal.
+- Sources: the agenda JSON APIs of **tvf90** and **streamtp**, each behind the `EventSchedule` interface
+  (separate from `StreamSource`, since agendas and streams could come from different sites).
+  `MergedSchedule` fetches both at once and shows them as one list sorted by start time. The sites
+  usually list different events; when both list the same match it simply appears twice (one per site).
+  If one site fails, its last loaded agenda stays; the other keeps updating. Details per site in
+  `docs/adapters/`.
+- Each event's signals are channel ids of the same site, played by that site's adapter.
+  - tvf90 lists several mirrors per signal ("OP2", "OP3", "HD"); they share one stream id, so the app
+    shows them as a single signal. Events have a country flag.
+  - streamtp lists one entry per signal; the app groups entries with the same time, competition and title
+    into one event. It gives no channel names or flags: signals are named after the stream id
+    (`DISNEY 1`, `TUDN USA`, plus the language for fights streamed in several: `PARAMOUNT 2 · English`),
+    and the flag slot stays empty.
+- Both sites give wall-clock start times without zone (Lima for tvf90, Panama for streamtp; both UTC−5);
+  the app converts them and shows every time in the TV's own time zone.
 - The site gives start times only, so **Live** is a guess: from the start until 2h30 later
   (`MenuViewModel.LIVE_WINDOW`). Events are grouped into *Earlier today* (dimmed), *Live now* and *Coming
   up* (with a countdown during the last hour).
@@ -58,8 +69,10 @@ returns to the menu.
 
 ## Architecture
 - Single Gradle module `:app`, MVVM, Jetpack Compose for TV.
-- `source/` — `StreamSource` and `EventSchedule` interfaces (the only things the UI knows about) + one
-  adapter package per site (`source/tvf90`: `Tvf90Source`, `Tvf90Schedule`). When a site changes, only its adapter breaks. Adapter details live in
+- `source/` — `StreamSource` and `EventSchedule` interfaces (the only things the UI knows about), plus
+  `RoutingStreamSource` (plays each channel with its site's adapter), `MergedSchedule` (one agenda out of
+  several) and `FallbackDns`. One adapter package per site (`source/tvf90`, `source/streamtp`, each with a
+  `…Source` and a `…Schedule`). When a site changes, only its adapter breaks. Adapter details live in
   `docs/adapters/`.
 - `ChannelLineup.kt` — the hardcoded list of channels (all tvf90 ids, in menu order).
 - `menu/` — `MenuViewModel` (agenda state: loading / loaded / error, live-status classification,
@@ -69,7 +82,8 @@ returns to the menu.
 - `player/` — `PlayerViewModel` (state: current channel or none, playback idle / loading / ready /
   error; `play` / `stop`), `PlayerScreen` (stateless UI), `VideoPlayer` (wraps ExoPlayer + Media3
   `PlayerView`).
-- Networking: OkHttp; JSON with kotlinx-serialization; event flags loaded with Coil. Times use
+- Networking: OkHttp; JSON with kotlinx-serialization; streamtp requests use DNS-over-HTTPS as a
+  fallback (see Key decisions); event flags loaded with Coil. Times use
   `java.time` (core library desugaring, since minSdk 23 predates it). Tests: JVM unit tests with
   MockWebServer and saved copies of the site's page and agenda.
 
@@ -81,5 +95,9 @@ returns to the menu.
   little on live channels.
 - No navigation library: two screens switched by `currentChannel` don't justify one.
 - The lineup is a fixed list inside the app, not fetched from the site.
+- streamtp's domain is blocked by the home ISP's DNS (it answers "no such domain"). Its requests first try
+  the normal DNS and, only if that fails, ask Cloudflare over HTTPS (DoH), which the ISP can't tamper
+  with. Limited to streamtp so the rest of the app behaves like any other app on the network. The video
+  servers themselves aren't blocked, so the player uses the normal DNS.
 - Every channel carries the site that plays it (`Channel.source`); `RoutingStreamSource` hands it to that
   site's adapter, so the player never needs to know which site a channel comes from.
