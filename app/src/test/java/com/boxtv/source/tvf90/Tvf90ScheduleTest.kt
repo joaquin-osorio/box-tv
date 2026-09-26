@@ -69,13 +69,13 @@ class Tvf90ScheduleTest {
         val events = loadFixture()
 
         // OP2, OP3 and HD embeds all carry the same stream id.
-        assertEquals(listOf(Channel("tudn", "TUDN USA")), events.byId(40025).channels)
-        assertEquals(listOf(Channel("tntsportschile", "TNT Sports Premiun CL")), events.byId(40038).channels)
+        assertEquals(listOf(tvf90("tudn", "TUDN USA")), events.byId(40025).channels)
+        assertEquals(listOf(tvf90("tntsportschile", "TNT Sports Premiun CL")), events.byId(40038).channels)
     }
 
     @Test
     fun `decodes stream id with trailing newline`() = runTest {
-        assertEquals(listOf(Channel("even1", "Entel TV PLUS+")), loadFixture().byId(40037).channels)
+        assertEquals(listOf(tvf90("even1", "Entel TV PLUS+")), loadFixture().byId(40037).channels)
     }
 
     @Test
@@ -110,7 +110,7 @@ class Tvf90ScheduleTest {
 
         val channels = schedule.events().single().channels
 
-        assertEquals(listOf(Channel("espn", "ESPN"), Channel("disney", "Disney+")), channels)
+        assertEquals(listOf(tvf90("espn", "ESPN"), tvf90("disney", "Disney+")), channels)
     }
 
     @Test
@@ -148,6 +148,8 @@ class Tvf90ScheduleTest {
     }
 
     private fun List<ScheduledEvent>.byId(id: Long) = single { it.id == id }
+
+    private fun tvf90(id: String, title: String) = Channel(Tvf90Source.ID, id, title)
 
     private fun json(vararg entries: String) =
         MockResponse.Builder().body("""{"data":[${entries.joinToString(",")}]}""").build()

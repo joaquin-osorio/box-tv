@@ -14,7 +14,7 @@ import org.junit.Test
 class Tvf90SourceTest {
 
     private val server = MockWebServer()
-    private val channel = Channel(id = "dsports", title = "DSports")
+    private val channel = Channel(source = "tvf90", id = "dsports", title = "DSports")
     private lateinit var source: Tvf90Source
 
     @Before

@@ -4,6 +4,7 @@ import com.boxtv.source.Channel
 import com.boxtv.source.EventSchedule
 import com.boxtv.source.ScheduleException
 import com.boxtv.source.ScheduledEvent
+import com.boxtv.source.USER_AGENT
 import java.io.IOException
 import java.time.Clock
 import java.time.Instant
@@ -113,7 +114,7 @@ class Tvf90Schedule(
         val streamId = target.queryParameter("stream")?.trim()?.ifEmpty { null } ?: return null
         // Mirrors are named "<channel> | OP2", "<channel> | HD"; keep the channel part.
         val channelName = name?.substringBefore(" | ")?.trim()?.ifEmpty { null } ?: streamId
-        return Channel(id = streamId, title = channelName)
+        return Channel(source = Tvf90Source.ID, id = streamId, title = channelName)
     }
 
     private fun imageUrl(path: String): String = when {

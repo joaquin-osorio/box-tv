@@ -32,7 +32,7 @@ class MenuViewModelTest {
         title = "Match $id",
         startsAt = startsAt,
         flagUrl = null,
-        channels = listOf(Channel("tudn", "TUDN"))
+        channels = listOf(Channel("tvf90", "tudn", "TUDN"))
     )
 
     /** Answers each fetch with the next queued result: a list of events, or null to fail. */

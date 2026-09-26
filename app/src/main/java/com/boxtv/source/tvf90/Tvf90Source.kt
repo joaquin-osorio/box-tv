@@ -4,6 +4,7 @@ import com.boxtv.source.Channel
 import com.boxtv.source.ResolvedStream
 import com.boxtv.source.StreamResolutionException
 import com.boxtv.source.StreamSource
+import com.boxtv.source.USER_AGENT
 import java.io.IOException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -50,12 +51,10 @@ class Tvf90Source(
         .addQueryParameter("stream", channel.id)
         .build()
 
-    private companion object {
-        val PLAYBACK_URL_REGEX = Regex("""playbackURL\s*=\s*"([^"]+)"""")
+    companion object {
+        /** [Channel.source] of tvf90 channels. */
+        const val ID = "tvf90"
+
+        private val PLAYBACK_URL_REGEX = Regex("""playbackURL\s*=\s*"([^"]+)"""")
     }
 }
-
-/** Browser User-Agent sent to every tvf90 host, so requests look like the site's own pages. */
-internal const val USER_AGENT =
-    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) " +
-        "Chrome/128.0.0.0 Safari/537.36"

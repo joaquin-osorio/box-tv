@@ -1,7 +1,10 @@
 package com.boxtv.source
 
-/** A watchable live channel exposed by a [StreamSource]. [id] is the site-specific channel key. */
-data class Channel(val id: String, val title: String)
+/**
+ * A watchable live channel. [source] names the site that plays it (the key its [StreamSource] is
+ * registered under in [RoutingStreamSource]); [id] is that site's channel key.
+ */
+data class Channel(val source: String, val id: String, val title: String)
 
 /**
  * A playable stream. [url] is typically short-lived (signed tokens), so it must be resolved right

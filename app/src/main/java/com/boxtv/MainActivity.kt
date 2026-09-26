@@ -19,13 +19,16 @@ import com.boxtv.menu.MenuRoute
 import com.boxtv.menu.MenuViewModel
 import com.boxtv.player.PlayerScreen
 import com.boxtv.player.PlayerViewModel
+import com.boxtv.source.RoutingStreamSource
 import com.boxtv.source.tvf90.Tvf90Schedule
 import com.boxtv.source.tvf90.Tvf90Source
 
 class MainActivity : ComponentActivity() {
 
     private val playerViewModel: PlayerViewModel by viewModels {
-        viewModelFactory { initializer { PlayerViewModel(Tvf90Source()) } }
+        viewModelFactory {
+            initializer { PlayerViewModel(RoutingStreamSource(mapOf(Tvf90Source.ID to Tvf90Source()))) }
+        }
     }
     private val menuViewModel: MenuViewModel by viewModels {
         viewModelFactory { initializer { MenuViewModel(Tvf90Schedule()) } }

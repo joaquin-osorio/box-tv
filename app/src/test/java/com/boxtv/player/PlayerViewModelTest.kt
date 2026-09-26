@@ -18,8 +18,8 @@ import org.junit.Test
 @OptIn(ExperimentalCoroutinesApi::class)
 class PlayerViewModelTest {
 
-    private val espn = Channel(id = "espn", title = "ESPN")
-    private val dsports = Channel(id = "dsports", title = "DSports")
+    private val espn = Channel(source = "tvf90", id = "espn", title = "ESPN")
+    private val dsports = Channel(source = "tvf90", id = "dsports", title = "DSports")
 
     /** Answers each resolve with the next queued result; each success yields a distinct URL. */
     private class FakeSource(vararg results: Boolean) : StreamSource {

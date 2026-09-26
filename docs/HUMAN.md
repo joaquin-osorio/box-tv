@@ -80,5 +80,6 @@ returns to the menu.
 - ExoPlayer's built-in controller is disabled. It grabs D-pad keys for its own buttons, and pause/seek add
   little on live channels.
 - No navigation library: two screens switched by `currentChannel` don't justify one.
-- The lineup is a fixed list inside the app, not fetched from the site. All channels currently come from
-  tvf90; mixing sites will need each channel to know its source.
+- The lineup is a fixed list inside the app, not fetched from the site.
+- Every channel carries the site that plays it (`Channel.source`); `RoutingStreamSource` hands it to that
+  site's adapter, so the player never needs to know which site a channel comes from.
