@@ -20,14 +20,26 @@ import com.boxtv.menu.MenuViewModel
 import com.boxtv.player.PlayerScreen
 import com.boxtv.player.PlayerViewModel
 import com.boxtv.source.RoutingStreamSource
+import com.boxtv.source.dnsWithDohFallback
+import com.boxtv.source.streamtp.StreamtpSource
 import com.boxtv.source.tvf90.Tvf90Schedule
 import com.boxtv.source.tvf90.Tvf90Source
+import okhttp3.OkHttpClient
 
 class MainActivity : ComponentActivity() {
 
     private val playerViewModel: PlayerViewModel by viewModels {
         viewModelFactory {
-            initializer { PlayerViewModel(RoutingStreamSource(mapOf(Tvf90Source.ID to Tvf90Source()))) }
+            initializer {
+                PlayerViewModel(
+                    RoutingStreamSource(
+                        mapOf(
+                            Tvf90Source.ID to Tvf90Source(),
+                            StreamtpSource.ID to StreamtpSource(streamtpClient)
+                        )
+                    )
+                )
+            }
         }
     }
     private val menuViewModel: MenuViewModel by viewModels {
@@ -43,6 +55,11 @@ class MainActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    private companion object {
+        /** streamtp's domain is blocked by some ISPs' DNS, so its requests fall back to DNS-over-HTTPS. */
+        val streamtpClient by lazy { OkHttpClient.Builder().dns(dnsWithDohFallback()).build() }
     }
 }
 
