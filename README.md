@@ -27,7 +27,8 @@ with a remote (D-pad).
 - To build from source:
   - **JDK 17** or newer.
   - **Android SDK** with platform **API 37** installed (Android Studio installs it for you).
-  - `adb` (part of Android SDK Platform-Tools) to install on a device.
+  - Optionally `adb` (part of Android SDK Platform-Tools) to install over the network instead of with a
+    USB drive.
 
 The Gradle wrapper is included, so you don't need Gradle installed.
 
@@ -50,7 +51,24 @@ sdk.dir=/path/to/Android/sdk
 
 The APK is written to `app/build/outputs/apk/debug/app-debug.apk`.
 
-### 2. Install on an Android TV device
+### 2. Install on an Android TV device (USB drive)
+
+No developer mode or cables to the computer needed:
+
+1. Copy `app/build/outputs/apk/debug/app-debug.apk` to a USB drive (FAT32 or exFAT).
+2. On the TV, install a file manager from the Play Store if there isn't one (e.g. **File Commander**,
+   **X-plore** or **FX File Explorer**).
+3. Allow that file manager to install apps. Usually the TV asks the first time you open an APK and takes
+   you to the right toggle; otherwise enable it under **Settings → Apps → Security & restrictions →
+   Unknown sources** (the exact path varies by brand).
+4. Plug the USB drive into the TV, open it in the file manager and select `app-debug.apk` → **Install**.
+   To update, repeat with the new APK; the app's data is kept.
+
+The same works with any other way of getting the APK onto the TV (e.g. **Send Files to TV** over Wi-Fi).
+
+### Alternative: install over the network with adb
+
+Handy for development, since it builds and installs in one step.
 
 1. On the TV, enable developer mode: **Settings → System → About**, then press OK on **Android TV OS
    build** (or **Build**) seven times.
