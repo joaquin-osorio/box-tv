@@ -5,4 +5,18 @@
     <string name="player_error_title">Couldn\'t play %1$s</string>
     <string name="player_retry">Retry</string>
     <string name="menu_tab_channels">Channels</string>
+    <string name="menu_tab_events">Events</string>
+    <string name="events_loading">Loading today\'s events…</string>
+    <string name="events_error">Couldn\'t load today\'s events</string>
+    <string name="events_empty">No events scheduled today</string>
+    <string name="events_section_earlier">Earlier today</string>
+    <string name="events_section_live">Live now</string>
+    <string name="events_section_upcoming">Coming up</string>
+    <string name="events_live">LIVE</string>
+    <string name="events_starts_in">In %1$d min</string>
+    <string name="events_no_signal">No signal yet</string>
+    <plurals name="events_signal_count">
+        <item quantity="one">%1$d signal</item>
+        <item quantity="other">%1$d signals</item>
+    </plurals>
 </resources>

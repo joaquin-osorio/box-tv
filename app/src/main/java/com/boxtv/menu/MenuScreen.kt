@@ -25,11 +25,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.focusRestorer
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Tab
 import androidx.tv.material3.TabRow
@@ -37,12 +42,32 @@ import androidx.tv.material3.Text
 import com.boxtv.R
 import com.boxtv.source.Channel
 import java.time.LocalDateTime
+import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import java.util.Locale
 import kotlinx.coroutines.delay
 
 private enum class MenuTab(@StringRes val title: Int) {
-    Channels(R.string.menu_tab_channels)
+    Channels(R.string.menu_tab_channels),
+    Events(R.string.menu_tab_events)
+}
+
+/** Connects [MenuScreen] to [viewModel]; the agenda is refreshed only while the menu is started. */
+@Composable
+fun MenuRoute(viewModel: MenuViewModel, channels: List<Channel>, onPlay: (Channel) -> Unit) {
+    val state by viewModel.uiState.collectAsStateWithLifecycle()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(viewModel, lifecycleOwner) {
+        lifecycleOwner.repeatOnLifecycle(Lifecycle.State.STARTED) { viewModel.keepFresh() }
+    }
+    MenuScreen(
+        channels = channels,
+        state = state,
+        onToggleEvent = viewModel::toggleEvent,
+        onCollapseEvent = viewModel::collapse,
+        onRetrySchedule = viewModel::retry,
+        onPlay = onPlay
+    )
 }
 
 /**
@@ -54,9 +79,17 @@ private enum class MenuTab(@StringRes val title: Int) {
  * lands exactly where the user left.
  */
 @Composable
-fun MenuScreen(channels: List<Channel>, onPlay: (Channel) -> Unit) {
+fun MenuScreen(
+    channels: List<Channel>,
+    state: MenuUiState,
+    onToggleEvent: (Long) -> Unit,
+    onCollapseEvent: () -> Unit,
+    onRetrySchedule: () -> Unit,
+    onPlay: (Channel) -> Unit
+) {
     var selectedTab by rememberSaveable { mutableStateOf(MenuTab.Channels) }
     var lastChannelId by rememberSaveable { mutableStateOf<String?>(null) }
+    var lastEventKey by rememberSaveable { mutableStateOf<String?>(null) }
     val tabStates = rememberSaveableStateHolder()
     val tabFocus = remember { MenuTab.entries.associateWith { FocusRequester() } }
     val listEntry = remember { FocusRequester() }
@@ -80,7 +113,14 @@ fun MenuScreen(channels: List<Channel>, onPlay: (Channel) -> Unit) {
             .padding(horizontal = 48.dp, vertical = 27.dp)
     ) {
         MenuHeader()
-        TabRow(selectedTabIndex = selectedTab.ordinal, modifier = Modifier.padding(top = 20.dp)) {
+        TabRow(
+            selectedTabIndex = selectedTab.ordinal,
+            modifier = Modifier
+                .padding(top = 20.dp)
+                // Entering the row from the list must land on the selected tab, not the one nearest
+                // to the focused row: focusing a tab switches to it.
+                .focusRestorer(tabFocus.getValue(selectedTab))
+        ) {
             MenuTab.entries.forEach { tab ->
                 Tab(
                     selected = tab == selectedTab,
@@ -112,6 +152,20 @@ fun MenuScreen(channels: List<Channel>, onPlay: (Channel) -> Unit) {
                             onPlay(channel)
                         }
                     )
+
+                    MenuTab.Events -> EventsTab(
+                        state = state.schedule,
+                        expandedEventId = state.expandedEventId,
+                        entryKey = lastEventKey,
+                        entryFocus = listEntry,
+                        onToggleEvent = onToggleEvent,
+                        onCollapse = onCollapseEvent,
+                        onPlay = { key, channel ->
+                            lastEventKey = key
+                            onPlay(channel)
+                        },
+                        onRetry = onRetrySchedule
+                    )
                 }
             }
         }
@@ -121,7 +175,6 @@ fun MenuScreen(channels: List<Channel>, onPlay: (Channel) -> Unit) {
 /** App name on the left; today's date and a minute-accurate clock on the right. */
 @Composable
 private fun MenuHeader() {
-    val context = LocalContext.current
     val now by produceState(LocalDateTime.now()) {
         while (true) {
             delay(MILLIS_PER_MINUTE - System.currentTimeMillis() % MILLIS_PER_MINUTE)
@@ -130,9 +183,7 @@ private fun MenuHeader() {
     }
     val locale = Locale.getDefault()
     val dateFormat = remember(locale) { localizedFormatter(locale, "EEEEdMMMM") }
-    val timeFormat = remember(locale) {
-        localizedFormatter(locale, if (DateFormat.is24HourFormat(context)) "Hm" else "hm")
-    }
+    val timeFormat = rememberTimeFormatter()
 
     Row(verticalAlignment = Alignment.Bottom, modifier = Modifier.fillMaxWidth()) {
         Text(
@@ -148,6 +199,17 @@ private fun MenuHeader() {
             )
             Text(text = now.format(timeFormat), style = MaterialTheme.typography.titleLarge)
         }
+    }
+}
+
+/** Hours and minutes in the device's locale and 12/24-hour setting, in the device's time zone. */
+@Composable
+internal fun rememberTimeFormatter(): DateTimeFormatter {
+    val context = LocalContext.current
+    val locale = Locale.getDefault()
+    val is24Hour = DateFormat.is24HourFormat(context)
+    return remember(locale, is24Hour) {
+        localizedFormatter(locale, if (is24Hour) "Hm" else "hm").withZone(ZoneId.systemDefault())
     }
 }
 

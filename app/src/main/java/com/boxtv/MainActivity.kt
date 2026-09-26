@@ -15,9 +15,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 import androidx.tv.material3.MaterialTheme
 import androidx.tv.material3.Surface
 import androidx.tv.material3.darkColorScheme
-import com.boxtv.menu.MenuScreen
+import com.boxtv.menu.MenuRoute
+import com.boxtv.menu.MenuViewModel
 import com.boxtv.player.PlayerScreen
 import com.boxtv.player.PlayerViewModel
+import com.boxtv.source.tvf90.Tvf90Schedule
 import com.boxtv.source.tvf90.Tvf90Source
 
 class MainActivity : ComponentActivity() {
@@ -25,13 +27,16 @@ class MainActivity : ComponentActivity() {
     private val playerViewModel: PlayerViewModel by viewModels {
         viewModelFactory { initializer { PlayerViewModel(Tvf90Source()) } }
     }
+    private val menuViewModel: MenuViewModel by viewModels {
+        viewModelFactory { initializer { MenuViewModel(Tvf90Schedule()) } }
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContent {
             MaterialTheme(colorScheme = darkColorScheme()) {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    BoxTvApp(playerViewModel)
+                    BoxTvApp(playerViewModel, menuViewModel)
                 }
             }
         }
@@ -43,14 +48,14 @@ class MainActivity : ComponentActivity() {
  * it. The menu's saveable state (tab, scroll, last pick) is kept while the player is showing.
  */
 @Composable
-private fun BoxTvApp(player: PlayerViewModel) {
+private fun BoxTvApp(player: PlayerViewModel, menu: MenuViewModel) {
     val state by player.uiState.collectAsStateWithLifecycle()
     val screens = rememberSaveableStateHolder()
     val channel = state.currentChannel
 
     if (channel == null) {
         screens.SaveableStateProvider("menu") {
-            MenuScreen(channels = ChannelLineup, onPlay = player::play)
+            MenuRoute(viewModel = menu, channels = ChannelLineup, onPlay = player::play)
         }
     } else {
         PlayerScreen(

@@ -4,12 +4,15 @@ An Android TV app that plays web live streams as if they were native TV channels
 with a remote (D-pad).
 
 > **Status: early MVP.** A home menu with a fixed lineup of six live sports channels (ESPN, DSports,
-> Fox Sports, TNT Sports, ESPN Premium, TyC Sports).
+> Fox Sports, TNT Sports, ESPN Premium, TyC Sports) and today's sports agenda with links to the channels
+> broadcasting each event.
 
 ## Features
 
 - Home menu with tabs, built for the remote: pick a channel and it plays; **Back** returns to the menu
   right where you left it.
+- **Events** tab: today's matches grouped into earlier / live now / coming up, auto-refreshed every
+  minute. Pick an event to watch it; events broadcast on several channels let you choose one.
 - Full-screen live playback with Media3 (ExoPlayer), starting as soon as a channel is picked.
 - Stream URLs are resolved at runtime on the device (the sites hand out short-lived signed URLs), so
   nothing expires inside the APK.
@@ -84,6 +87,8 @@ and run `./gradlew installDebug` — or just press **Run** in Android Studio.
   to play a channel.
 - Press **Up** from the top of a list (or **Back**) to reach the tabs; **Left/Right** switches tab and
   **Down** goes back into the list. **Back** on the tabs exits the app.
+- On the **Events** tab, **OK** on an event plays it; if it has several signals, **OK** lists them below
+  it (pick one with **Down** + **OK**), and **OK** again or **Back** hides them.
 - While playing, **Back** returns to the menu.
 - If the stream fails, press OK on **Retry**, or **Back** to pick something else.
 - There are no playback controls (pause/seek): channels behave like live TV.
