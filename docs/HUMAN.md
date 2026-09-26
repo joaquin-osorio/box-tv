@@ -13,8 +13,20 @@ sports channels from tvf90 (`ChannelLineup`), autoplaying.
 3. The tvf90 adapter downloads the site's internal player page (pretending to be the site's own
    embedding page via the `Referer` header, which the site requires) and pulls the HLS (`.m3u8`) URL out
    of it. None of the site's JavaScript — ads, popups, geo checks — is ever executed.
-4. The player screen plays that URL with Media3/ExoPlayer, full screen, starting immediately. Pressing
-   any remote button shows the playback controls.
+4. The player screen plays that URL with Media3/ExoPlayer, full screen, starting immediately. There are
+   no playback controls: channels behave like live TV.
+
+## Channel menu
+- **Left** on the remote opens a floating channel list over the video (which keeps playing), with focus
+  on the current channel. **Up/Down + OK** switches channel (a new URL is resolved each time), and
+  the menu closes. **Back** or **Right** closes it without switching.
+- It closes on its own after **10 s without a key press**. Each key press inside the menu restarts
+  the countdown. The timer lives in `PlayerViewModel` (`MENU_TIMEOUT`), not in the UI, so it's unit-tested
+  with virtual time.
+- Left also works from the loading and error screens, so a broken channel is never a dead end.
+- Focus: while the menu is closed, the screen's root (or the Retry button, on error) holds focus and
+  catches Left. While the menu is open, only the menu is focusable, so D-pad can't leak to the content
+  underneath. When it closes, focus goes back to where it was.
 
 ## Error handling
 - If the URL can't be obtained (site down, page changed), the screen shows an error message and a
@@ -29,11 +41,17 @@ sports channels from tvf90 (`ChannelLineup`), autoplaying.
 - `source/` — `StreamSource` interface (the only thing the UI knows about) + one adapter per site
   (`source/tvf90`). When a site changes, only its adapter breaks. Adapter details live in
   `docs/adapters/`.
-- `player/` — `PlayerViewModel` (state: loading / ready / error), `PlayerScreen` (stateless UI),
-  `VideoPlayer` (wraps ExoPlayer + Media3 `PlayerView`).
+- `ChannelLineup.kt` — the hardcoded list of channels (all tvf90 ids, in menu order).
+- `player/` — `PlayerViewModel` (state: channel lineup, current channel, playback loading / ready /
+  error, menu open + auto-close timer), `PlayerScreen` and `ChannelMenu` (stateless UI), `VideoPlayer`
+  (wraps ExoPlayer + Media3 `PlayerView`).
 - Networking: OkHttp. Tests: JVM unit tests with MockWebServer and a saved copy of the site's page.
 
 ## Key decisions
 - No hardcoded stream URL: it expires, so it's resolved at runtime on the device itself.
 - Regex over the inline script instead of an HTML parser (the URL lives in a JS variable, not in the DOM).
 - No dependency injection framework or multi-module setup yet — not justified at this size.
+- ExoPlayer's built-in controller is disabled. It grabbed every D-pad key and uses Left/Right for its own
+  buttons, which clashes with "Left opens the menu". Pause/seek add little on live channels.
+- The lineup is a fixed list inside the app, not fetched from the site. All channels currently come from
+  tvf90; mixing sites will need each channel to know its source.

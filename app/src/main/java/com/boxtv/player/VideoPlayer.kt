@@ -22,9 +22,9 @@ import androidx.media3.ui.PlayerView
 import com.boxtv.source.ResolvedStream
 
 /**
- * Full-screen live HLS playback of [stream], autoplaying. Owns the ExoPlayer instance: a new one is
- * built per [stream] and released when leaving composition. Fatal errors are reported through
- * [onPlaybackError]; falling behind the live window is recovered locally.
+ * Full-screen live HLS playback of [stream], autoplaying, without transport controls. Owns the
+ * ExoPlayer instance: a new one is built per [stream] and released when leaving composition. Fatal
+ * errors are reported through [onPlaybackError]; falling behind the live window is recovered locally.
  */
 @OptIn(UnstableApi::class)
 @Composable
@@ -91,13 +91,10 @@ fun VideoPlayer(
             PlayerView(viewContext).apply {
                 keepScreenOn = true
                 setShowBuffering(PlayerView.SHOW_BUFFERING_ALWAYS)
-                setShowFastForwardButton(false)
-                setShowRewindButton(false)
-                setShowPreviousButton(false)
-                setShowNextButton(false)
-                // Receives D-pad keys so pressing any remote button reveals the controls.
-                isFocusable = true
-                requestFocus()
+                // Live TV: no transport controls. The view must not take focus, otherwise it swallows
+                // the D-pad keys the Compose screen uses (Left opens the channel menu).
+                useController = false
+                isFocusable = false
             }
         },
         update = { view -> view.player = player },

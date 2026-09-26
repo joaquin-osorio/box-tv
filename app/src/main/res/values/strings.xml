@@ -4,4 +4,5 @@
     <string name="player_loading">Loading %1$s…</string>
     <string name="player_error_title">Couldn\'t play %1$s</string>
     <string name="player_retry">Retry</string>
+    <string name="channel_menu_title">Channels</string>
 </resources>
